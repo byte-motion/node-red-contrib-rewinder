@@ -18,7 +18,6 @@
             "options": ["debug", "info", "log", "time", "timeEnd", "trace"]
         },
         "object-literal-shorthand": true,
-        "type-literal-over-interface": true,
         "one-line": true,
         "triple-equals": true,
         "no-shadowed-variable": true,
