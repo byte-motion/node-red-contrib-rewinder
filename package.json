@@ -21,6 +21,10 @@
     "type": "git",
     "url": "git+https://github.com/byte-motion/node-red-contrib-rewinder.git"
   },
+  "keywords": [
+    "node-red",
+    "automation"
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "node-red": {
