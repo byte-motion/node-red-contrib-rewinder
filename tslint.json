@@ -1,0 +1,32 @@
+{
+    "rules": {
+        "max-line-length": {
+            "options": [120]
+        },
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
+        "new-parens": true,
+        "no-arg": true,
+        "no-bitwise": true,
+        "no-conditional-assignment": true,
+        "no-consecutive-blank-lines": false,
+        "no-console": {
+            "severity": "warning",
+            "options": ["debug", "info", "log", "time", "timeEnd", "trace"]
+        },
+        "object-literal-shorthand": true,
+        "type-literal-over-interface": true,
+        "one-line": true,
+        "triple-equals": true,
+        "no-shadowed-variable": true,
+        "comment-format": true
+    },
+    "jsRules": {
+        "max-line-length": {
+            "options": [120]
+        }
+    }
+}

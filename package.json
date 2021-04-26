@@ -1,0 +1,45 @@
+{
+  "name": "node-red-contrib-rewinder",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "rm -rf nodes lib test && mkdir -p nodes/icons && cp -a src/nodes/*.html nodes/ && cp -a src/nodes/icons/* nodes/icons && tsc",
+    "pretest": "rm -rf test && mkdir -p test/fixtures && cp -a src/test/fixtures/* test/fixtures/ && tsc",
+    "prepublish": "npm run lint-fix build",
+    "test": "mocha \"./test/**/*.spec.js\"",
+    "deploy": "npm run build && docker ps -aqf \"ancestor=nodered/node-red:${NODE_RED_VERSION:=latest-12}\" | xargs -I % bash -c \"docker exec % bash -c 'cd /data && npm rebuild' && docker restart %\"",
+    "lint": "./node_modules/.bin/tslint -p ./",
+    "lint-fix": "./node_modules/.bin/tslint --fix -p ./"
+  },
+  "homepage": "https://github.com/byte-motion/node-red-contrib-rewinder#readme",
+  "author": {
+    "name": "Byte Motion AB"
+  },
+  "bugs": {
+    "url": "https://github.com/byte-motion/node-red-contrib-rewinder/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byte-motion/node-red-contrib-rewinder.git"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "node-red": {
+    "nodes": {
+      "rewinder": "nodes/rewinder.js"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/chai": "^4.2.5",
+    "@types/math3d": "^0.2.3",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.12.14",
+    "@types/node-red": "^1.1.1",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "node-red": "^1.2.9",
+    "node-red-node-test-helper": "^0.2.6",
+    "tslint": "^5.20.1",
+    "typescript": "^3.9.7"
+  }
+}

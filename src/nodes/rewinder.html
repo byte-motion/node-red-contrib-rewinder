@@ -1,0 +1,26 @@
+<script type="text/javascript">
+    RED.nodes.registerType('rewinder', {
+        category: 'rewinder',
+        color: '#08b6ce',
+        defaults: {
+            name: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "signal.png",
+        label: function() {
+            return this.name || "rewinder";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rewinder">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rewinder">
+    <p></p>
+</script>
