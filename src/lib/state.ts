@@ -14,6 +14,7 @@
  * limitations under the License.
  **/
 import { NodeMessageInFlow, Node } from 'node-red';
+import { record } from './playback';
 import { RewinderInMessage } from './types';
 
 
@@ -25,13 +26,21 @@ export enum RewinderStateType {
 
 export type RewinderState = {
     type: RewinderStateType;
-    handle: (node: Node, msg: RewinderInMessage) => NodeMessageInFlow;
+    handle: (
+        filename: string,
+        node: Node,
+        msg: RewinderInMessage
+    ) => NodeMessageInFlow;
     transitionTo: (newState: RewinderState) => RewinderState;
 };
 
 export const startedState: RewinderState = {
     type: RewinderStateType.STARTED,
-    handle: (_node: Node, _msg: RewinderInMessage): NodeMessageInFlow => {
+    handle: (
+        _filename: string,
+        _node: Node,
+        _msg: RewinderInMessage
+    ): NodeMessageInFlow => {
         // TODO: READ FROM FILE
         return {} as NodeMessageInFlow;
     },
@@ -45,7 +54,11 @@ export const startedState: RewinderState = {
 
 export const stoppedState: RewinderState = {
     type: RewinderStateType.STOPPED,
-    handle: (_node: Node, _msg: RewinderInMessage): NodeMessageInFlow => {
+    handle: (
+        _filename: string,
+        _node: Node,
+        _msg: RewinderInMessage
+    ): NodeMessageInFlow => {
         // TODO: READ FROM FILE
         return {} as NodeMessageInFlow;
     },
@@ -56,8 +69,12 @@ export const stoppedState: RewinderState = {
 
 export const recordingState: RewinderState = {
     type: RewinderStateType.RECORDING,
-    handle: (_node: Node, _msg: RewinderInMessage): NodeMessageInFlow => {
-        // TODO: WRITE TO FILE
+    handle: (
+        filename: string,
+        node: Node,
+        msg: RewinderInMessage
+    ): NodeMessageInFlow => {
+        record(filename, node, msg);
         return {} as NodeMessageInFlow;
     },
     transitionTo: (newState: RewinderState): RewinderState => {

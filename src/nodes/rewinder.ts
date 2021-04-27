@@ -13,23 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+import fs from 'fs';
+import path from 'path';
 import { NodeAPI, NodeAPISettingsWithData, NodeDef, Node, NodeMessageInFlow, NodeMessage } from 'node-red';
 import eventHandler from '../lib/eventHandler';
 import { RewinderInMessage } from '../lib/types';
 import { status } from '../lib/data';
 
-export = (RED: NodeAPI<NodeAPISettingsWithData>): void =>
-    RED.nodes.registerType('rewinder', function (this: Node, config: NodeDef) {
+const getDataDir = (api: NodeAPI<NodeAPISettingsWithData>): string =>
+    path.join(
+        (api.settings.userDir || process.env.HOME) as string,
+        'rewinder'
+    );
+
+const getDailyLogFile = (api: NodeAPI<NodeAPISettingsWithData>, node: Node, dataDir: string): string => {
+    const prefix = node['wires']
+        .map(([w]) => api.nodes.getNode(w))
+        .map((n: Node) => `${n.name || n.type}[${n.id}]`)
+        .join('-');
+    const [day] = new Date().toISOString().split('T');
+
+    return path.join(
+        dataDir,
+        `${prefix}-${day}.log`
+    );
+};
+
+export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
+    api.nodes.registerType('rewinder', function (this: Node, config: NodeDef) {
         const node: Node = this;
-        RED.nodes.createNode(this, config);
+        api.nodes.createNode(this, config);
         node.status(status.recording);
+        const dataDir = getDataDir(api);
+        if (fs.existsSync(dataDir) === false) {
+            fs.mkdirSync(dataDir);
+        }
         node.on('input', (
             msg: NodeMessageInFlow,
             send: (msg: NodeMessage | Array<NodeMessage | null>) => void,
             done: (err?: Error) => void,
         ) => {
             try {
-                const outMessage = eventHandler(node, msg as RewinderInMessage);
+                const filename = getDailyLogFile(api, node, dataDir);
+                const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
                 (send || node.send)(outMessage);
                 (done || (() => { }))();
             }
