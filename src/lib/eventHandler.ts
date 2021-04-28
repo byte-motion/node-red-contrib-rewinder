@@ -21,15 +21,16 @@ import { recordingState, startedState, currentState, stoppedState } from './stat
 export default (node: Node, filename: string, msg: RewinderInMessage): NodeMessage | undefined => {
     switch (msg.topic) {
         case RewinderTopic.START:
-            currentState.value = currentState.value
-                .transitionTo(node, startedState);
-            break;
+            currentState.value = currentState.value.transitionTo(node, startedState);
+            return currentState.value.handle(filename, node, msg);
         case RewinderTopic.STOP:
-            currentState.value = currentState.value
-                .transitionTo(node, stoppedState)
-                .transitionTo(node, recordingState);
-            break;
+            currentState.value.transitionTo(node, stoppedState);
+            const result = currentState.value.handle(filename, node, msg);
+            // Do not record stop message
+            currentState.value = currentState.value.transitionTo(node, recordingState);
+            return result;
+        default:
+            return currentState.value.handle(filename, node, msg);
     }
 
-    return currentState.value.handle(filename, node, msg);
 };

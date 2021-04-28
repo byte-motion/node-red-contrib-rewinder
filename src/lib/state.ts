@@ -38,8 +38,7 @@ export const startedState: RewinderState = {
     ): undefined => {
         play(filename, node, msg)
             .then(() => {
-                currentState.value = recordingState;
-                node.status(status.RECORDING);
+                currentState.value = startedState.transitionTo(node, recordingState);
             })
             .catch(err => node.error(err));
         return undefined;
@@ -49,7 +48,7 @@ export const startedState: RewinderState = {
             playbackState.rs?.close();
             playbackState.rs = undefined;
         }
-        node.status(newState.type);
+        node.status(status[newState.type]);
         return newState;
     }
 };
@@ -62,11 +61,10 @@ export const stoppedState: RewinderState = {
         _msg: RewinderInMessage
     ): undefined => undefined,
     transitionTo: (node: Node, newState: RewinderState): RewinderState => {
-        node.status(newState.type);
+        node.status(status[newState.type]);
         return newState;
     }
 };
-
 
 export const recordingState: RewinderState = {
     type: RewinderStateType.RECORDING,
@@ -74,8 +72,9 @@ export const recordingState: RewinderState = {
         filename: string,
         node: Node,
         msg: RewinderInMessage
-    ): NodeMessageInFlow => {
+    ): NodeMessageInFlow | undefined => {
         record(filename, node, msg);
+
         return msg;
     },
     transitionTo: (node: Node, newState: RewinderState): RewinderState => {
@@ -83,7 +82,7 @@ export const recordingState: RewinderState = {
             playbackState.ws?.close();
             playbackState.ws = undefined;
         }
-        node.status(newState.type);
+        node.status(status[newState.type]);
         return newState;
     }
 };

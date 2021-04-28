@@ -59,32 +59,37 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
     }
 
     playbackState.rs = fs.createReadStream(filename);
+    
     const reader = readline.createInterface({
         input: playbackState.rs,
-        terminal: false,
-        historySize: 0
+        crlfDelay: Infinity
     });
 
     let prevTs = inMsg.payload?.startTime || 0;
+
     for await (const line of reader) {
         const pos = line.indexOf(LOG_SEPARATOR);
         const ts = parseInt(line.slice(0, pos), 10);
+
         if (inMsg.payload?.startTime && ts < inMsg.payload.startTime) {
             continue;
         }
         else if (inMsg.payload?.endTime && ts >= inMsg.payload.endTime) {
             break;
         }
+
         const data = line.slice(pos + 1);
+
         if (!data) {
             continue;
         }
+
         const outMsg = JSON.parse(data);
 
         if (prevTs) {
             reader.pause();
             await new Promise(r =>
-                setTimeout(r, ts - prevTs)
+                setTimeout(r, 1000)//ts - prevTs)
             );
             reader.resume();
         }
@@ -93,7 +98,6 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
         node.send(outMsg);
     }
 
-    return new Promise(r =>
-        reader.on('end', r)
-    );
+    playbackState.rs?.close();
+    playbackState.rs = undefined;
 };
