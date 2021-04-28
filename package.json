@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-rewinder",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "scripts": {
     "build": "rm -rf nodes lib test && mkdir -p nodes/icons && cp -a src/nodes/*.html nodes/ && cp -a src/nodes/icons/* nodes/icons && tsc",
     "pretest": "rm -rf test && mkdir -p test/fixtures && cp -a src/test/fixtures/* test/fixtures/ && tsc",
