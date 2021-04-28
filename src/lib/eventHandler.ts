@@ -14,25 +14,22 @@
  * limitations under the License.
  **/
 import { Node, NodeMessage } from 'node-red';
-import { RewinderInMessage, RewinderTopic } from './types';
-import { status } from '../lib/data';
-import { recordingState, startedState, stoppedState } from './state';
+import { RewinderInMessage, RewinderTopic } from './types';;
+import { recordingState, startedState, currentState, stoppedState } from './state';
 
 
-let state = recordingState;
+export default (node: Node, filename: string, msg: RewinderInMessage): NodeMessage | undefined => {
+    switch (msg.topic) {
+        case RewinderTopic.START:
+            currentState.value = currentState.value
+                .transitionTo(node, startedState);
+            break;
+        case RewinderTopic.STOP:
+            currentState.value = currentState.value
+                .transitionTo(node, stoppedState)
+                .transitionTo(node, recordingState);
+            break;
+    }
 
-export default (node: Node, filename: string, msg: RewinderInMessage): NodeMessage => {
-        node.debug(`Received msg: ${JSON.stringify(msg, null, 2)}`);
-        node.status(status[msg.topic] || status.recording);
-
-        switch (msg.topic) {
-            case RewinderTopic.START:
-                state = state.transitionTo(startedState);
-                break;
-            case RewinderTopic.STOP:
-                state = state.transitionTo(stoppedState);
-                break;
-        }
-        
-        return state.handle(filename, node, msg);
-    };
+    return currentState.value.handle(filename, node, msg);
+};

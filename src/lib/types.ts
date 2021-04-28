@@ -15,12 +15,23 @@
  **/
 import { NodeMessageInFlow } from 'node-red';
 
+export type RewinderInMessagePayload = {
+    startTime?: number;
+    endTime?: number;
+};
 
 export type RewinderInMessage = {
-    topic: RewinderTopic
+    topic: RewinderTopic,
+    payload?: RewinderInMessagePayload
 } & NodeMessageInFlow;
 
 export enum RewinderTopic {
     START = 'START',
     STOP = 'STOP'
+};
+
+export enum RewinderStateType {
+    STARTED = 'STARTED',
+    STOPPED = 'STOPPED',
+    RECORDING = 'RECORDING'
 };

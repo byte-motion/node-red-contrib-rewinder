@@ -13,13 +13,87 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-// import fs from 'fs';
+import fs, { ReadStream, WriteStream } from 'fs';
+import os from 'os';
+import readline from 'readline';
 import { NodeMessageInFlow, Node } from 'node-red';
+import { RewinderInMessage } from './types';
+
+const LOG_SEPARATOR = '#';
+
+export type PlaybackState = {
+    filename?: string;
+    ws?: WriteStream;
+    rs?: ReadStream;
+};
+
+export const playbackState: PlaybackState = {
+    filename: undefined,
+    ws: undefined,
+    rs: undefined
+};
 
 export const record = (
     filename: string,
     node: Node,
-    _msg: NodeMessageInFlow
+    msg: NodeMessageInFlow
 ): void => {
-    node.log(`Writing msg to ${filename}`);
+    node.trace(`Writing msg to ${filename}`);
+    if (filename !== playbackState.filename) {
+        playbackState.ws?.close();
+        playbackState.ws = fs.createWriteStream(filename, { flags: 'a' });
+    }
+    delete (msg as any)._msgid;
+    playbackState.ws?.write(
+        `${Date.now()}${LOG_SEPARATOR}${JSON.stringify(msg)}${os.EOL}`,
+        err => err && node.error(err)
+    );
+};
+
+
+export const play = async (filename: string, node: Node, inMsg: RewinderInMessage): Promise<void> => {
+    node.debug(`Starting playback from ${filename}`);
+
+    if (playbackState.rs) {
+        throw new Error(`Playback already started from ${filename}`);
+    }
+
+    playbackState.rs = fs.createReadStream(filename);
+    const reader = readline.createInterface({
+        input: playbackState.rs,
+        terminal: false,
+        historySize: 0
+    });
+
+    let prevTs = inMsg.payload?.startTime || 0;
+    for await (const line of reader) {
+        const pos = line.indexOf(LOG_SEPARATOR);
+        const ts = parseInt(line.slice(0, pos), 10);
+        if (inMsg.payload?.startTime && ts < inMsg.payload.startTime) {
+            continue;
+        }
+        else if (inMsg.payload?.endTime && ts >= inMsg.payload.endTime) {
+            break;
+        }
+        const data = line.slice(pos + 1);
+        if (!data) {
+            continue;
+        }
+        const outMsg = JSON.parse(data);
+
+        if (prevTs) {
+            reader.pause();
+            await new Promise(r =>
+                setTimeout(r, ts - prevTs)
+            );
+            reader.resume();
+        }
+
+        prevTs = ts;
+        node.send(outMsg);
+    }
+
+    return new Promise(r =>
+        reader.on('end', r)
+    );
 };

@@ -14,36 +14,19 @@
  * limitations under the License.
  **/
 import fs from 'fs';
-import path from 'path';
 import { NodeAPI, NodeAPISettingsWithData, NodeDef, Node, NodeMessageInFlow, NodeMessage } from 'node-red';
 import eventHandler from '../lib/eventHandler';
 import { RewinderInMessage } from '../lib/types';
 import { status } from '../lib/data';
+import { getDataDir, getDailyLogFile } from '../lib/utils';
+import { playbackState } from '../lib/playback';
 
-const getDataDir = (api: NodeAPI<NodeAPISettingsWithData>): string =>
-    path.join(
-        (api.settings.userDir || process.env.HOME) as string,
-        'rewinder'
-    );
-
-const getDailyLogFile = (api: NodeAPI<NodeAPISettingsWithData>, node: Node, dataDir: string): string => {
-    const prefix = node['wires']
-        .map(([w]) => api.nodes.getNode(w))
-        .map((n: Node) => `${n.name || n.type}[${n.id}]`)
-        .join('-');
-    const [day] = new Date().toISOString().split('T');
-
-    return path.join(
-        dataDir,
-        `${prefix}-${day}.log`
-    );
-};
 
 export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
     api.nodes.registerType('rewinder', function (this: Node, config: NodeDef) {
         const node: Node = this;
         api.nodes.createNode(this, config);
-        node.status(status.recording);
+        node.status(status.RECORDING);
         const dataDir = getDataDir(api);
         if (fs.existsSync(dataDir) === false) {
             fs.mkdirSync(dataDir);
@@ -56,11 +39,16 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             try {
                 const filename = getDailyLogFile(api, node, dataDir);
                 const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
-                (send || node.send)(outMessage);
+                if (outMessage) {
+                    (send || node.send)(outMessage);
+                }
                 (done || (() => { }))();
             }
             catch (err) {
                 (e => done ? done(e) : node.error(e, msg))(err);
             }
+        });
+        node.on('close', () => {
+            playbackState.ws?.close();
         });
     });

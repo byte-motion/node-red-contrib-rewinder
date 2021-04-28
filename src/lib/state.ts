@@ -14,15 +14,10 @@
  * limitations under the License.
  **/
 import { NodeMessageInFlow, Node } from 'node-red';
-import { record } from './playback';
-import { RewinderInMessage } from './types';
+import { play, playbackState, record } from './playback';
+import { RewinderInMessage, RewinderStateType } from './types';
+import { status } from './data';
 
-
-export enum RewinderStateType {
-    STARTED = 'STARTED',
-    STOPPED = 'STOPPED',
-    RECORDING = 'RECORDING'
-};
 
 export type RewinderState = {
     type: RewinderStateType;
@@ -30,24 +25,31 @@ export type RewinderState = {
         filename: string,
         node: Node,
         msg: RewinderInMessage
-    ) => NodeMessageInFlow;
-    transitionTo: (newState: RewinderState) => RewinderState;
+    ) => NodeMessageInFlow | undefined;
+    transitionTo: (node: Node, newState: RewinderState) => RewinderState;
 };
 
 export const startedState: RewinderState = {
     type: RewinderStateType.STARTED,
     handle: (
-        _filename: string,
-        _node: Node,
-        _msg: RewinderInMessage
-    ): NodeMessageInFlow => {
-        // TODO: READ FROM FILE
-        return {} as NodeMessageInFlow;
+        filename: string,
+        node: Node,
+        msg: RewinderInMessage
+    ): undefined => {
+        play(filename, node, msg)
+            .then(() => {
+                currentState.value = recordingState;
+                node.status(status.RECORDING);
+            })
+            .catch(err => node.error(err));
+        return undefined;
     },
-    transitionTo: (newState: RewinderState): RewinderState => {
-        if (newState.type === RewinderStateType.STOPPED) {
-            // TODO: Stop reading
+    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
+        if (newState.type === RewinderStateType.RECORDING) {
+            playbackState.rs?.close();
+            playbackState.rs = undefined;
         }
+        node.status(newState.type);
         return newState;
     }
 };
@@ -58,14 +60,13 @@ export const stoppedState: RewinderState = {
         _filename: string,
         _node: Node,
         _msg: RewinderInMessage
-    ): NodeMessageInFlow => {
-        // TODO: READ FROM FILE
-        return {} as NodeMessageInFlow;
-    },
-    transitionTo: (newState: RewinderState): RewinderState => {
+    ): undefined => undefined,
+    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
+        node.status(newState.type);
         return newState;
     }
 };
+
 
 export const recordingState: RewinderState = {
     type: RewinderStateType.RECORDING,
@@ -75,12 +76,25 @@ export const recordingState: RewinderState = {
         msg: RewinderInMessage
     ): NodeMessageInFlow => {
         record(filename, node, msg);
-        return {} as NodeMessageInFlow;
+        return msg;
     },
-    transitionTo: (newState: RewinderState): RewinderState => {
+    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
         if (newState.type === RewinderStateType.STARTED) {
-            // TODO: Stop recording
+            playbackState.ws?.close();
+            playbackState.ws = undefined;
         }
+        node.status(newState.type);
         return newState;
+    }
+};
+
+let state: RewinderState = recordingState;
+
+export const currentState = {
+    get value(): RewinderState {
+        return state;
+    },
+    set value(v: RewinderState) {
+        state = v;
     }
 };

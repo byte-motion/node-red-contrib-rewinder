@@ -14,20 +14,20 @@
  * limitations under the License.
  **/
 import { NodeStatus } from 'node-red';
-import { RewinderTopic } from './types';
+import { RewinderStateType } from './types';
 
 export const status = {
-    [RewinderTopic.START]: {
+    [RewinderStateType.STARTED]: {
         fill: 'green',
         shape: 'dot',
         text: 'Started'
     } as NodeStatus,
-    [RewinderTopic.STOP]: {
+    [RewinderStateType.STOPPED]: {
         fill: 'yellow',
         shape: 'ring',
         text: 'Stopped'
     } as NodeStatus,
-    recording: {
+    [RewinderStateType.RECORDING]: {
         fill: 'red',
         shape: 'dot',
         text: 'Recording'
