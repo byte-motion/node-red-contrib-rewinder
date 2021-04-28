@@ -9,7 +9,7 @@ if stop it omitted and start is supplied, it will start from the specified start
 If neither are supplied, it will play throught the entire log file.
 ```json
     {
-        "topic": "START"
+        "topic": "START",
         "payload" : {
             "startTime":1619535928800,
             "stopTime":1619536928800
