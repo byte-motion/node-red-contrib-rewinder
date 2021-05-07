@@ -32,7 +32,9 @@
       "rewinder": "nodes/rewinder.js"
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "circular-json": "^0.5.9"
+  },
   "devDependencies": {
     "@types/chai": "^4.2.5",
     "@types/math3d": "^0.2.3",

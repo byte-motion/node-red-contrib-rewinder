@@ -26,6 +26,7 @@ export const getDataDir = (api: NodeAPI<NodeAPISettingsWithData>): string =>
 export const getDailyLogFile = (api: NodeAPI<NodeAPISettingsWithData>, node: Node, dataDir: string): string => {
     const prefix = node['wires']
         .map(([w]) => api.nodes.getNode(w))
+        .filter(n => !!n)
         .map((n: Node) => `${n.name || n.type}(${n.id})`)
         .join('-');
     const [day] = new Date().toISOString().split('T');
