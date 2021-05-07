@@ -18,7 +18,7 @@ import os from 'os';
 import readline from 'readline';
 import { NodeMessageInFlow, Node } from 'node-red';
 import { RewinderInMessage } from './types';
-import * as CircularJSON from 'circular-json';
+import { stringify } from 'flatted';
 
 const LOG_SEPARATOR = '#';
 
@@ -47,7 +47,7 @@ export const record = (
     }
     delete (msg as any)._msgid;
     playbackState.ws?.write(
-        `${Date.now()}${LOG_SEPARATOR}${CircularJSON(msg)}${os.EOL}`,
+        `${Date.now()}${LOG_SEPARATOR}${stringify(msg)}${os.EOL}`,
         err => err && node.error(err)
     );
 };
@@ -61,7 +61,7 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
     }
 
     playbackState.rs = fs.createReadStream(filename);
-    
+
     const reader = readline.createInterface({
         input: playbackState.rs,
         crlfDelay: Infinity
