@@ -20,13 +20,16 @@ import { RewinderInMessage } from '../lib/types';
 import { status } from '../lib/data';
 import { getDataDir, getDailyLogFile } from '../lib/utils';
 import { playbackState } from '../lib/playback';
+import { currentState, recordingState } from '../lib/state';
 
 
 export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
     api.nodes.registerType('rewinder', function (this: Node, config: NodeDef) {
         const node: Node = this;
         api.nodes.createNode(this, config);
-        node.status(status.RECORDING);
+        // Restart in recording
+        currentState.value = recordingState;
+        node.status(status[currentState.value.type]);
         const dataDir = getDataDir(api);
         if (fs.existsSync(dataDir) === false) {
             fs.mkdirSync(dataDir);
@@ -37,7 +40,7 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             done: (err?: Error) => void,
         ) => {
             try {
-                const filename = getDailyLogFile(api, node, dataDir, msg as RewinderInMessage, );
+                const filename = getDailyLogFile(api, node, dataDir, msg as RewinderInMessage);
                 const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
                 if (outMessage) {
                     (send || node.send)(outMessage);
@@ -50,5 +53,8 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
         });
         node.on('close', () => {
             playbackState.ws?.close();
+            playbackState.rs?.close();
+            playbackState.ws = undefined;
+            playbackState.rs = undefined;
         });
     });
