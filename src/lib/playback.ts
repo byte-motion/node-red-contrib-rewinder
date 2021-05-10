@@ -18,7 +18,7 @@ import os from 'os';
 import readline from 'readline';
 import { NodeMessageInFlow, Node } from 'node-red';
 import { RewinderInMessage } from './types';
-import { stringify } from 'flatted';
+import { parse, stringify } from 'flatted';
 
 const LOG_SEPARATOR = '#';
 
@@ -86,12 +86,12 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
             continue;
         }
 
-        const outMsg = JSON.parse(data);
+        const outMsg = parse(data);
 
         if (prevTs) {
             reader.pause();
             await new Promise(r =>
-                setTimeout(r, 1000)//ts - prevTs)
+                setTimeout(r, ts - prevTs)
             );
             reader.resume();
         }
