@@ -26,8 +26,8 @@ export type RewinderInMessage = {
 } & NodeMessageInFlow;
 
 export enum RewinderTopic {
-    START = 'START',
-    STOP = 'STOP'
+    START = 'REWINDER_START',
+    STOP = 'REWINDER_STOP'
 };
 
 export enum RewinderStateType {

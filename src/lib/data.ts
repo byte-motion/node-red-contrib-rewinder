@@ -33,3 +33,6 @@ export const status = {
         text: 'Recording'
     } as NodeStatus
 };
+
+
+export const REWINDER_TOPIC_PREFIX = 'REWINDER_';
