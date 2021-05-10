@@ -32,12 +32,12 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             fs.mkdirSync(dataDir);
         }
         node.on('input', (
-            msg: NodeMessageInFlow,
+            msg: RewinderInMessage | NodeMessageInFlow,
             send: (msg: NodeMessage | Array<NodeMessage | null>) => void,
             done: (err?: Error) => void,
         ) => {
             try {
-                const filename = getDailyLogFile(api, node, dataDir);
+                const filename = getDailyLogFile(api, node, dataDir, msg as RewinderInMessage, );
                 const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
                 if (outMessage) {
                     (send || node.send)(outMessage);

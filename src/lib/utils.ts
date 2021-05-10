@@ -15,6 +15,8 @@
  **/
 import path from 'path';
 import { Node, NodeAPI, NodeAPISettingsWithData } from 'node-red';
+import { REWINDER_TOPIC_PREFIX } from './data';
+import { RewinderInMessage } from './types';
 
 
 export const getDataDir = (api: NodeAPI<NodeAPISettingsWithData>): string =>
@@ -23,13 +25,21 @@ export const getDataDir = (api: NodeAPI<NodeAPISettingsWithData>): string =>
         'rewinder'
     );
 
-export const getDailyLogFile = (api: NodeAPI<NodeAPISettingsWithData>, node: Node, dataDir: string): string => {
+export const getDailyLogFile = (
+    api: NodeAPI<NodeAPISettingsWithData>,
+    node: Node,
+    dataDir: string,
+    msg: RewinderInMessage
+): string => {
     const prefix = node['wires']
         .map(([w]) => api.nodes.getNode(w))
-        .filter(n => !!n)
+        .filter((n: Node | undefined) => !!n)
         .map((n: Node) => `${n.name || n.type}(${n.id})`)
         .join('-');
-    const [day] = new Date().toISOString().split('T');
+    const date = msg.topic?.startsWith(REWINDER_TOPIC_PREFIX) && !!msg.payload?.startTime
+        ? new Date(msg.payload.startTime)
+        : new Date();
+    const [day] = date.toISOString().split('T');
 
     return path.join(
         dataDir,
