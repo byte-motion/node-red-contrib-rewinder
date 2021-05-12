@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { NodeMessageInFlow } from 'node-red';
+import { NodeDef, NodeMessageInFlow } from 'node-red';
 
 export type RewinderInMessagePayload = {
     startTime?: number;
@@ -35,3 +35,7 @@ export enum RewinderStateType {
     STOPPED = 'STOPPED',
     RECORDING = 'RECORDING'
 };
+
+export type RewinderConfig = {
+    filenamePrefixOverride: string;
+} & NodeDef;

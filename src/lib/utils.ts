@@ -29,9 +29,10 @@ export const getDailyLogFile = (
     api: NodeAPI<NodeAPISettingsWithData>,
     node: Node,
     dataDir: string,
-    msg: RewinderInMessage
+    msg: RewinderInMessage,
+    filenamePrefixOverride: string
 ): string => {
-    const prefix = node['wires']
+    const prefix = filenamePrefixOverride || node['wires']
         .map(([w]) => api.nodes.getNode(w))
         .filter((n: Node | undefined) => !!n)
         .map((n: Node) => `${n.name || n.type}(${n.id})`)

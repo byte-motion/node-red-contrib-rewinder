@@ -14,9 +14,9 @@
  * limitations under the License.
  **/
 import fs from 'fs';
-import { NodeAPI, NodeAPISettingsWithData, NodeDef, Node, NodeMessageInFlow, NodeMessage } from 'node-red';
+import { NodeAPI, NodeAPISettingsWithData, Node, NodeMessageInFlow, NodeMessage } from 'node-red';
 import eventHandler from '../lib/eventHandler';
-import { RewinderInMessage } from '../lib/types';
+import { RewinderConfig, RewinderInMessage } from '../lib/types';
 import { status } from '../lib/data';
 import { getDataDir, getDailyLogFile } from '../lib/utils';
 import { playbackState } from '../lib/playback';
@@ -24,7 +24,7 @@ import { currentState, recordingState } from '../lib/state';
 
 
 export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
-    api.nodes.registerType('rewinder', function (this: Node, config: NodeDef) {
+    api.nodes.registerType('rewinder', function (this: Node, config: RewinderConfig) {
         const node: Node = this;
         api.nodes.createNode(this, config);
         // Restart in recording
@@ -40,7 +40,13 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             done: (err?: Error) => void,
         ) => {
             try {
-                const filename = getDailyLogFile(api, node, dataDir, msg as RewinderInMessage);
+                const filename = getDailyLogFile(
+                    api,
+                    node,
+                    dataDir,
+                    msg as RewinderInMessage,
+                    config.filenamePrefixOverride
+                );
                 const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
                 if (outMessage) {
                     (send || node.send)(outMessage);
