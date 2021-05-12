@@ -24,7 +24,7 @@ export default (node: Node, filename: string, msg: RewinderInMessage): NodeMessa
             currentState.value = currentState.value.transitionTo(node, startedState);
             return currentState.value.handle(filename, node, msg);
         case RewinderTopic.STOP:
-            currentState.value.transitionTo(node, stoppedState);
+            currentState.value = currentState.value.transitionTo(node, stoppedState);
             const result = currentState.value.handle(filename, node, msg);
             // Do not record stop message
             currentState.value = currentState.value.transitionTo(node, recordingState);

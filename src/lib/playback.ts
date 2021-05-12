@@ -34,7 +34,6 @@ export const playbackState: PlaybackState = {
     rs: undefined
 };
 
-
 export const record = (
     filename: string,
     node: Node,
@@ -61,6 +60,7 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
     }
 
     playbackState.rs = fs.createReadStream(filename);
+    playbackState.filename = filename;
 
     const reader = readline.createInterface({
         input: playbackState.rs,
@@ -97,9 +97,20 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
         }
 
         prevTs = ts;
+        //@ts-ignore
+        if (playbackState.rs === undefined) {
+            break;
+        }
         node.send(outMsg);
     }
 
-    playbackState.rs?.close();
-    playbackState.rs = undefined;
+    stop(node);
 };
+
+export const stop = (node: Node) => {
+    if (playbackState.rs) {
+        node.debug(`Stopping playback from ${playbackState.filename}`);
+        playbackState.rs?.close();
+        playbackState.rs = undefined;
+    }
+}; 

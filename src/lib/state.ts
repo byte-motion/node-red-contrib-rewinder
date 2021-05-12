@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 import { NodeMessageInFlow, Node } from 'node-red';
-import { play, playbackState, record } from './playback';
+import { play, playbackState, record, stop } from './playback';
 import { RewinderInMessage, RewinderStateType } from './types';
 import { status } from './data';
 
@@ -44,10 +44,7 @@ export const startedState: RewinderState = {
         return undefined;
     },
     transitionTo: (node: Node, newState: RewinderState): RewinderState => {
-        if (newState.type === RewinderStateType.RECORDING) {
-            playbackState.rs?.close();
-            playbackState.rs = undefined;
-        }
+        stop(node);
         node.status(status[newState.type]);
         return newState;
     }
