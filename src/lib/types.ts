@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { NodeDef, NodeMessageInFlow } from 'node-red';
+import { Node, NodeDef, NodeMessageInFlow } from 'node-red';
+import { RewinderNodeState } from './state';
 
 export type RewinderInMessagePayload = {
     startTime?: number;
@@ -21,8 +22,8 @@ export type RewinderInMessagePayload = {
 };
 
 export type RewinderInMessage = {
-    topic: RewinderTopic,
-    payload?: RewinderInMessagePayload
+    topic: RewinderTopic;
+    payload?: RewinderInMessagePayload;
 } & NodeMessageInFlow;
 
 export enum RewinderTopic {
@@ -35,6 +36,10 @@ export enum RewinderStateType {
     STOPPED = 'STOPPED',
     RECORDING = 'RECORDING'
 };
+
+export type RewinderNode = { 
+    state: RewinderNodeState;
+} & Node;
 
 export type RewinderConfig = {
     filenamePrefixOverride: string;

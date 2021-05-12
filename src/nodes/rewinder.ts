@@ -14,20 +14,20 @@
  * limitations under the License.
  **/
 import fs from 'fs';
-import { NodeAPI, NodeAPISettingsWithData, Node, NodeMessageInFlow, NodeMessage } from 'node-red';
+import { NodeAPI, NodeAPISettingsWithData, NodeMessageInFlow, NodeMessage } from 'node-red';
 import eventHandler from '../lib/eventHandler';
-import { RewinderConfig, RewinderInMessage } from '../lib/types';
+import { RewinderConfig, RewinderInMessage, RewinderNode } from '../lib/types';
 import { status } from '../lib/data';
 import { getDataDir, getDailyLogFile } from '../lib/utils';
-import { newRewinderNodeState, RewinderNodeState } from '../lib/state';
+import { newRewinderNodeState } from '../lib/state';
 
 
 export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
-    api.nodes.registerType('rewinder', function (this: Node, config: RewinderConfig) {
-        const node: Node = this;
+    api.nodes.registerType('rewinder', function (this: RewinderNode, config: RewinderConfig) {
+        const node: RewinderNode = this;
         api.nodes.createNode(this, config);
-        const state: RewinderNodeState = newRewinderNodeState();
-        node.status(status[state.rewinderState.type]);
+        node.state = newRewinderNodeState();
+        node.status(status[node.state.rewinderState.type]);
 
         const dataDir = getDataDir(api);
         if (fs.existsSync(dataDir) === false) {
@@ -47,7 +47,7 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
                     msg as RewinderInMessage,
                     config.filenamePrefixOverride
                 );
-                const outMessage = eventHandler(node, state, filename, msg as RewinderInMessage);
+                const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
                 if (outMessage) {
                     (send || node.send)(outMessage);
                 }
@@ -58,9 +58,9 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             }
         });
         node.on('close', () => {
-            state.playbackState.ws?.close();
-            state.playbackState.rs?.close();
-            state.playbackState.ws = undefined;
-            state.playbackState.rs = undefined;
+            node.state.playbackState.ws?.close();
+            node.state.playbackState.rs?.close();
+            node.state.playbackState.ws = undefined;
+            node.state.playbackState.rs = undefined;
         });
     });

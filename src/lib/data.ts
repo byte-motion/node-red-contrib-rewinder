@@ -34,5 +34,4 @@ export const status = {
     } as NodeStatus
 };
 
-
 export const REWINDER_TOPIC_PREFIX = 'REWINDER_';

@@ -13,30 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Node, NodeMessage } from 'node-red';
-import { RewinderInMessage, RewinderTopic } from './types';;
+import { NodeMessage } from 'node-red';
+import { RewinderInMessage, RewinderNode, RewinderTopic } from './types';;
 import { recordingState, startedState, stoppedState } from './stateMachine';
-import { RewinderNodeState } from './state';
 
 
 export default (
-    node: Node,
-    state: RewinderNodeState,
+    node: RewinderNode,
     filename: string,
     msg: RewinderInMessage
 ): NodeMessage | undefined => {
     switch (msg.topic) {
         case RewinderTopic.START:
-            state.rewinderState = state.rewinderState.transitionTo(node, state, startedState);
-            return state.rewinderState.handle(filename, node, state, msg);
+            node.state.rewinderState = node.state.rewinderState.transitionTo(node, startedState);
+            return node.state.rewinderState.handle(filename, node, msg);
         case RewinderTopic.STOP:
-            state.rewinderState = state.rewinderState.transitionTo(node, state, stoppedState);
-            const result = state.rewinderState.handle(filename, node, state, msg);
+            node.state.rewinderState = node.state.rewinderState.transitionTo(node, stoppedState);
+            const result = node.state.rewinderState.handle(filename, node, msg);
             // Do not record stop message
-            state.rewinderState = state.rewinderState.transitionTo(node, state, recordingState);
+            node.state.rewinderState = node.state.rewinderState.transitionTo(node, recordingState);
             return result;
         default:
-            return state.rewinderState.handle(filename, node, state, msg);
+            return node.state.rewinderState.handle(filename, node, msg);
     }
 
 };

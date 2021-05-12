@@ -16,10 +16,9 @@
 import fs, { ReadStream, WriteStream } from 'fs';
 import os from 'os';
 import readline from 'readline';
-import { NodeMessageInFlow, Node } from 'node-red';
-import { RewinderInMessage } from './types';
+import { NodeMessageInFlow } from 'node-red';
+import { RewinderInMessage, RewinderNode } from './types';
 import { parse, stringify } from 'flatted';
-import { RewinderNodeState } from './state';
 
 const LOG_SEPARATOR = '#';
 
@@ -31,17 +30,16 @@ export type PlaybackState = {
 
 export const record = (
     filename: string,
-    node: Node,
-    state: RewinderNodeState,
+    node: RewinderNode,
     msg: NodeMessageInFlow
 ): void => {
     node.trace(`Writing msg to ${filename}`);
-    if (filename !== state.playbackState.filename) {
-        state.playbackState.ws?.close();
-        state.playbackState.ws = fs.createWriteStream(filename, { flags: 'a' });
+    if (filename !== node.state.playbackState.filename) {
+        node.state.playbackState.ws?.close();
+        node.state.playbackState.ws = fs.createWriteStream(filename, { flags: 'a' });
     }
     delete (msg as any)._msgid;
-    state.playbackState.ws?.write(
+    node.state.playbackState.ws?.write(
         `${Date.now()}${LOG_SEPARATOR}${stringify(msg)}${os.EOL}`,
         err => err && node.error(err)
     );
@@ -49,21 +47,20 @@ export const record = (
 
 export const play = async (
     filename: string,
-    node: Node,
-    state: RewinderNodeState,
+    node: RewinderNode,
     inMsg: RewinderInMessage
 ): Promise<void> => {
     node.debug(`Starting playback from ${filename}`);
 
-    if (state.playbackState.rs) {
+    if (node.state.playbackState.rs) {
         throw new Error(`Playback already started from ${filename}`);
     }
 
-    state.playbackState.rs = fs.createReadStream(filename);
-    state.playbackState.filename = filename;
+    node.state.playbackState.rs = fs.createReadStream(filename);
+    node.state.playbackState.filename = filename;
 
     const reader = readline.createInterface({
-        input: state.playbackState.rs,
+        input: node.state.playbackState.rs,
         crlfDelay: Infinity
     });
 
@@ -98,19 +95,19 @@ export const play = async (
 
         prevTs = ts;
         //@ts-ignore
-        if (state.playbackState.rs === undefined) {
+        if (node.state.playbackState.rs === undefined) {
             break;
         }
         node.send(outMsg);
     }
 
-    stop(node, state);
+    stop(node);
 };
 
-export const stop = (node: Node, state: RewinderNodeState) => {
-    if (state.playbackState.rs) {
-        node.debug(`Stopping playback from ${state.playbackState.filename}`);
-        state.playbackState.rs?.close();
-        state.playbackState.rs = undefined;
+export const stop = (node: RewinderNode) => {
+    if (node.state.playbackState.rs) {
+        node.debug(`Stopping playback from ${node.state.playbackState.filename}`);
+        node.state.playbackState.rs?.close();
+        node.state.playbackState.rs = undefined;
     }
 };
