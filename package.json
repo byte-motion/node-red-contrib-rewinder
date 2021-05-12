@@ -3,7 +3,7 @@
   "version": "0.1.3",
   "scripts": {
     "build": "rm -rf nodes lib test && mkdir -p nodes/icons && cp -a src/nodes/*.html nodes/ && cp -a src/nodes/icons/* nodes/icons && tsc",
-    "pretest": "rm -rf test && mkdir -p test/fixtures && cp -a src/test/fixtures/* test/fixtures/ && tsc",
+    "pretest": "rm -rf test && tsc",
     "prepublish": "npm run lint-fix build",
     "test": "mocha \"./test/**/*.spec.js\"",
     "deploy": "npm run build && docker ps -aqf \"ancestor=nodered/node-red:${NODE_RED_VERSION:=latest-12}\" | xargs -I % bash -c \"docker exec % bash -c 'cd /data && npm rebuild' && docker restart %\"",
