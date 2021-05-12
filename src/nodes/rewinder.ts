@@ -19,21 +19,21 @@ import eventHandler from '../lib/eventHandler';
 import { RewinderConfig, RewinderInMessage } from '../lib/types';
 import { status } from '../lib/data';
 import { getDataDir, getDailyLogFile } from '../lib/utils';
-import { playbackState } from '../lib/playback';
-import { currentState, recordingState } from '../lib/state';
+import { newRewinderNodeState, RewinderNodeState } from '../lib/state';
 
 
 export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
     api.nodes.registerType('rewinder', function (this: Node, config: RewinderConfig) {
         const node: Node = this;
         api.nodes.createNode(this, config);
-        // Restart in recording
-        currentState.value = recordingState;
-        node.status(status[currentState.value.type]);
+        const state: RewinderNodeState = newRewinderNodeState();
+        node.status(status[state.rewinderState.type]);
+
         const dataDir = getDataDir(api);
         if (fs.existsSync(dataDir) === false) {
             fs.mkdirSync(dataDir);
         }
+
         node.on('input', (
             msg: RewinderInMessage | NodeMessageInFlow,
             send: (msg: NodeMessage | Array<NodeMessage | null>) => void,
@@ -47,7 +47,7 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
                     msg as RewinderInMessage,
                     config.filenamePrefixOverride
                 );
-                const outMessage = eventHandler(node, filename, msg as RewinderInMessage);
+                const outMessage = eventHandler(node, state, filename, msg as RewinderInMessage);
                 if (outMessage) {
                     (send || node.send)(outMessage);
                 }
@@ -58,9 +58,9 @@ export = (api: NodeAPI<NodeAPISettingsWithData>): void =>
             }
         });
         node.on('close', () => {
-            playbackState.ws?.close();
-            playbackState.rs?.close();
-            playbackState.ws = undefined;
-            playbackState.rs = undefined;
+            state.playbackState.ws?.close();
+            state.playbackState.rs?.close();
+            state.playbackState.ws = undefined;
+            state.playbackState.rs = undefined;
         });
     });

@@ -19,6 +19,7 @@ import readline from 'readline';
 import { NodeMessageInFlow, Node } from 'node-red';
 import { RewinderInMessage } from './types';
 import { parse, stringify } from 'flatted';
+import { RewinderNodeState } from './state';
 
 const LOG_SEPARATOR = '#';
 
@@ -28,42 +29,41 @@ export type PlaybackState = {
     rs?: ReadStream;
 };
 
-export const playbackState: PlaybackState = {
-    filename: undefined,
-    ws: undefined,
-    rs: undefined
-};
-
 export const record = (
     filename: string,
     node: Node,
+    state: RewinderNodeState,
     msg: NodeMessageInFlow
 ): void => {
     node.trace(`Writing msg to ${filename}`);
-    if (filename !== playbackState.filename) {
-        playbackState.ws?.close();
-        playbackState.ws = fs.createWriteStream(filename, { flags: 'a' });
+    if (filename !== state.playbackState.filename) {
+        state.playbackState.ws?.close();
+        state.playbackState.ws = fs.createWriteStream(filename, { flags: 'a' });
     }
     delete (msg as any)._msgid;
-    playbackState.ws?.write(
+    state.playbackState.ws?.write(
         `${Date.now()}${LOG_SEPARATOR}${stringify(msg)}${os.EOL}`,
         err => err && node.error(err)
     );
 };
 
-
-export const play = async (filename: string, node: Node, inMsg: RewinderInMessage): Promise<void> => {
+export const play = async (
+    filename: string,
+    node: Node,
+    state: RewinderNodeState,
+    inMsg: RewinderInMessage
+): Promise<void> => {
     node.debug(`Starting playback from ${filename}`);
 
-    if (playbackState.rs) {
+    if (state.playbackState.rs) {
         throw new Error(`Playback already started from ${filename}`);
     }
 
-    playbackState.rs = fs.createReadStream(filename);
-    playbackState.filename = filename;
+    state.playbackState.rs = fs.createReadStream(filename);
+    state.playbackState.filename = filename;
 
     const reader = readline.createInterface({
-        input: playbackState.rs,
+        input: state.playbackState.rs,
         crlfDelay: Infinity
     });
 
@@ -98,19 +98,19 @@ export const play = async (filename: string, node: Node, inMsg: RewinderInMessag
 
         prevTs = ts;
         //@ts-ignore
-        if (playbackState.rs === undefined) {
+        if (state.playbackState.rs === undefined) {
             break;
         }
         node.send(outMsg);
     }
 
-    stop(node);
+    stop(node, state);
 };
 
-export const stop = (node: Node) => {
-    if (playbackState.rs) {
-        node.debug(`Stopping playback from ${playbackState.filename}`);
-        playbackState.rs?.close();
-        playbackState.rs = undefined;
+export const stop = (node: Node, state: RewinderNodeState) => {
+    if (state.playbackState.rs) {
+        node.debug(`Stopping playback from ${state.playbackState.filename}`);
+        state.playbackState.rs?.close();
+        state.playbackState.rs = undefined;
     }
-}; 
+};

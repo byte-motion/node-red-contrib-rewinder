@@ -15,22 +15,28 @@
  **/
 import { Node, NodeMessage } from 'node-red';
 import { RewinderInMessage, RewinderTopic } from './types';;
-import { recordingState, startedState, currentState, stoppedState } from './state';
+import { recordingState, startedState, stoppedState } from './stateMachine';
+import { RewinderNodeState } from './state';
 
 
-export default (node: Node, filename: string, msg: RewinderInMessage): NodeMessage | undefined => {
+export default (
+    node: Node,
+    state: RewinderNodeState,
+    filename: string,
+    msg: RewinderInMessage
+): NodeMessage | undefined => {
     switch (msg.topic) {
         case RewinderTopic.START:
-            currentState.value = currentState.value.transitionTo(node, startedState);
-            return currentState.value.handle(filename, node, msg);
+            state.rewinderState = state.rewinderState.transitionTo(node, state, startedState);
+            return state.rewinderState.handle(filename, node, state, msg);
         case RewinderTopic.STOP:
-            currentState.value = currentState.value.transitionTo(node, stoppedState);
-            const result = currentState.value.handle(filename, node, msg);
+            state.rewinderState = state.rewinderState.transitionTo(node, state, stoppedState);
+            const result = state.rewinderState.handle(filename, node, state, msg);
             // Do not record stop message
-            currentState.value = currentState.value.transitionTo(node, recordingState);
+            state.rewinderState = state.rewinderState.transitionTo(node, state, recordingState);
             return result;
         default:
-            return currentState.value.handle(filename, node, msg);
+            return state.rewinderState.handle(filename, node, state, msg);
     }
 
 };

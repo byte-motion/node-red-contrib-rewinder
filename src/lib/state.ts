@@ -1,3 +1,6 @@
+import { PlaybackState } from './playback';
+import { recordingState, RewinderState } from './stateMachine';
+
 /**
  * Copyright 2021 Byte Motion AB
  *
@@ -13,84 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { NodeMessageInFlow, Node } from 'node-red';
-import { play, playbackState, record, stop } from './playback';
-import { RewinderInMessage, RewinderStateType } from './types';
-import { status } from './data';
-
-
-export type RewinderState = {
-    type: RewinderStateType;
-    handle: (
-        filename: string,
-        node: Node,
-        msg: RewinderInMessage
-    ) => NodeMessageInFlow | undefined;
-    transitionTo: (node: Node, newState: RewinderState) => RewinderState;
+export type RewinderNodeState = {
+    rewinderState: RewinderState;
+    playbackState: PlaybackState;
 };
 
-export const startedState: RewinderState = {
-    type: RewinderStateType.STARTED,
-    handle: (
-        filename: string,
-        node: Node,
-        msg: RewinderInMessage
-    ): undefined => {
-        play(filename, node, msg)
-            .then(() => {
-                currentState.value = startedState.transitionTo(node, recordingState);
-            })
-            .catch(err => node.error(err));
-        return undefined;
-    },
-    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
-        stop(node);
-        node.status(status[newState.type]);
-        return newState;
-    }
-};
-
-export const stoppedState: RewinderState = {
-    type: RewinderStateType.STOPPED,
-    handle: (
-        _filename: string,
-        _node: Node,
-        _msg: RewinderInMessage
-    ): undefined => undefined,
-    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
-        node.status(status[newState.type]);
-        return newState;
-    }
-};
-
-export const recordingState: RewinderState = {
-    type: RewinderStateType.RECORDING,
-    handle: (
-        filename: string,
-        node: Node,
-        msg: RewinderInMessage
-    ): NodeMessageInFlow | undefined => {
-        record(filename, node, msg);
-
-        return msg;
-    },
-    transitionTo: (node: Node, newState: RewinderState): RewinderState => {
-        if (newState.type === RewinderStateType.STARTED) {
-            playbackState.ws?.close();
-            playbackState.ws = undefined;
-        }
-        node.status(status[newState.type]);
-        return newState;
-    }
-};
-
-let state: RewinderState = recordingState;
-
-export const currentState = {
-    get value(): RewinderState {
-        return state;
-    },
-    set value(v: RewinderState) {
-        state = v;
-    }
-};
+export const newRewinderNodeState = (): RewinderNodeState => ({
+    rewinderState: recordingState,
+    playbackState: {
+        filename: undefined,
+        ws: undefined,
+        rs: undefined
+    } as PlaybackState
+} as RewinderNodeState);
