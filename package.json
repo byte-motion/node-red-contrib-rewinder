@@ -6,7 +6,7 @@
     "pretest": "rm -rf test && tsc",
     "prepublish": "npm run lint-fix build",
     "test": "mocha \"./test/**/*.spec.js\"",
-    "deploy": "npm run build && docker ps -aqf \"ancestor=nodered/node-red:${NODE_RED_VERSION:=latest-12}\" | xargs -I % bash -c \"docker exec % bash -c 'cd /data && npm rebuild' && docker restart %\"",
+    "deploy": "npm run build && docker ps -aqf \"ancestor=nodered/node-red:${NODE_RED_VERSION:=latest-14}\" | xargs -I % bash -c \"docker exec % bash -c 'cd /data && npm rebuild' && docker restart %\"",
     "lint": "./node_modules/.bin/tslint -p ./",
     "lint-fix": "./node_modules/.bin/tslint --fix -p ./"
   },
